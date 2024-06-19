@@ -1,0 +1,221 @@
+Mantel total (matriz D2 e matriz dist fil):
+plot(r1 <- mantel.rtest(Dtree,Dmatriz22), n = 9999, main = "Mantel's test")
+> r1
+Monte-Carlo test
+Call: mantelnoneuclid(m1 = m1, m2 = m2, nrepet = nrepet)
+
+Observation: 0.01177426 
+
+Based on 99 replicates
+Simulated p-value: 0.39 
+Alternative hypothesis: greater 
+
+     Std.Obs  Expectation     Variance 
+ 0.240411567 -0.006167844  0.005569754 
+ 
+ 
+ #####or:
+ MT <- mantel.test(treeD, matrizD2, nperm = 999, graph = TRUE,
++              main = "Mantel test: phylogenetic distance X niche overlap",
++              xlab = "Phylogenetic Distance in ma", ylab = "Niche Overlap",
++              sub = "The vertical line shows the observed z-statistic")
+> MT
+$z.stat
+[1] 52550.16
+
+$p
+[1] 0.871
+
+$alternative
+[1] "two.sided"
+
+
+
+Mantel test-physig Pat's PNOs (por variável - o total não funcionou, erro nos NA da matriz)
+
+####abrir workspace 11.03.20(1).RData
+####importar árvore bestVelloziaPP2020
+
+> load("/Users/suzanaalcantara/Desktop/Niche Evolution-Velloziaceae2020/Análises2020/diretorio/11.03.20(1).RData")
+treePat2020 <- read.nexus("bestVelloziaPP2020", force.multi = FALSE)
+> plot(treePat2020)
+
+#####gerar matrizes de sobreposição de nicho (por variável):
+AnnualMeanTemperature <- niche.overlap(data.frame(pnobio1))
+
+teste age.range.correlation (mantel sigif.)
+BIO01 <- age.range.correlation(phy = treePat2020, overlap = AnnualMeanTemperature, tri = "upper", n = 1000)
+
+
+######plot a.r.c:
+plot(BIO01$age.range.correlation)
+abline(BIO01$linear.regression$coefficients)
+apply(BIO01$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+####for all variables:
+
+AnnualMeanTemperature <- niche.overlap(data.frame(pnobio1))
+BIO01 <- age.range.correlation(phy = treePat2020, overlap = AnnualMeanTemperature, tri = "upper", n = 1000)
+
+plot(BIO01$age.range.correlation)
+abline(BIO01$linear.regression$coefficients)
+apply(BIO01$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+MaxTemperatureWarmestMonth <- niche.overlap(data.frame(pnobio5))
+BIO05 <- age.range.correlation(phy = treePat2020, overlap = MaxTemperatureWarmestMonth, tri = "upper", n = 500)
+
+plot(BIO05$age.range.correlation)
+abline(BIO05$linear.regression$coefficients)
+apply(BIO05$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+MinTemperatureColdestMonth <- niche.overlap(data.frame(pnobio6))
+BIO06 <- age.range.correlation(phy = treePat2020, overlap = MinTemperatureColdestMonth, tri = "upper", n = 500)
+
+plot(BIO06$age.range.correlation)
+abline(BIO06$linear.regression$coefficients)
+apply(BIO06$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO06$linear.regression$coefficients
+BIO06$sig
+
+MeanTemperatureWettestQuarter <- niche.overlap(data.frame(pnobio8))
+BIO08 <- age.range.correlation(phy = treePat2020, overlap = MeanTemperatureWettestQuarter, tri = "upper", n = 500)
+
+plot(BIO08$age.range.correlation)
+abline(BIO08$linear.regression$coefficients)
+apply(BIO08$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO08$linear.regression$coefficients
+BIO08$sig
+
+AnnualPrecipitation <- niche.overlap(data.frame(pnobio12))
+BIO12 <- age.range.correlation(phy = treePat2020, overlap = AnnualPrecipitation, tri = "upper", n = 500)
+
+plot(BIO12$age.range.correlation)
+abline(BIO12$linear.regression$coefficients)
+apply(BIO12$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO12$linear.regression$coefficients
+BIO12$sig
+
+PrecipitationSeasonality <- niche.overlap(data.frame(pnobio15))
+BIO15 <- age.range.correlation(phy = treePat2020, overlap = PrecipitationSeasonality, tri = "upper", n = 500)
+
+plot(BIO15$age.range.correlation)
+abline(BIO15$linear.regression$coefficients)
+apply(BIO15$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO15$linear.regression$coefficients
+BIO15$sig
+
+PrecipitationWettestQuarter <- niche.overlap(data.frame(pnobio16))
+BIO16 <- age.range.correlation(phy = treePat2020, overlap = PrecipitationWettestQuarter, tri = "upper", n = 500)
+
+plot(BIO16$age.range.correlation)
+abline(BIO16$linear.regression$coefficients)
+apply(BIO16$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO16$linear.regression$coefficients
+BIO16$sig
+
+PrecipitationWarmestQuarter <- niche.overlap(data.frame(pnobio18))
+BIO18 <- age.range.correlation(phy = treePat2020, overlap = PrecipitationWarmestQuarter, tri = "upper", n = 500)
+
+plot(BIO18$age.range.correlation)
+abline(BIO18$linear.regression$coefficients)
+apply(BIO18$MonteCarlo.replicates, 1, abline, lwd = 0.2, col = "grey50")
+
+BIO18$linear.regression$coefficients
+BIO18$sig
+
+###### results
+#age.range.correlation	
+A matrix with age and average overlap for each node.
+#linear.regression	
+A linear model of mean niche (or range)overlap versus node age.
+#sig	
+Significance of intercept and slope derived by randomization. f is the fraction of randomized datasets with intercept and slopes greater than the observed data. p-values are calculated as 2 * min(f, 1 - f).
+#MonteCarlo.replicates	
+A matrix containing intercepts and slopes of randomized datasets.
+
+
+BIO05$linear.regression$coefficients
+BIO05$sig
+
+BIO01$linear.regression$coefficients
+ (Intercept)          age 
+ 0.729273608 -0.006434316 
+> BIO01$sig
+                f     p
+(intercept) 0.111 0.222
+age         0.828 0.344
+
+> BIO01$
++ sig
+                f     p
+(intercept) 0.111 0.222
+age         0.828 0.344
+
+> BIO05$linear.regression$coefficients
+(Intercept)         age 
+ 0.77470422 -0.00449241 
+> BIO05$sig
+                f     p
+(intercept) 0.138 0.276
+age         0.764 0.472
+> 
+
+
+> BIO06$linear.regression$coefficients
+ (Intercept)          age 
+ 0.773979676 -0.006922075 
+> BIO06$sig
+                f     p
+(intercept) 0.068 0.136
+age         0.890 0.220
+> 
+
+
+BIO08$linear.regression$coefficients
+ (Intercept)          age 
+ 0.750074344 -0.005214033 
+> BIO08$sig
+                f     p
+(intercept) 0.168 0.336
+age         0.776 0.448
+
+
+
+
+BIO12$linear.regression$coefficients
+ (Intercept)          age 
+ 0.530300335 -0.002393763 
+> BIO12$sig
+                f     p
+(intercept) 0.276 0.552
+age         0.570 0.860
+
+BIO15$linear.regression$coefficients
+(Intercept)         age 
+0.630841650 0.001295081 
+> BIO15$sig
+                f     p
+(intercept) 0.498 0.996
+age         0.430 0.860
+
+BIO16$linear.regression$coefficients
+ (Intercept)          age 
+ 0.770906578 -0.004208743 
+> BIO16$sig
+                f     p
+(intercept) 0.154 0.308
+age         0.816 0.368
+
+
+> BIO18$linear.regression$coefficients
+ (Intercept)          age 
+ 0.647265630 -0.007353952 
+> BIO18$sig
+                f     p
+(intercept) 0.112 0.224
+age         0.762 0.476

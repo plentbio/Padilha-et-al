@@ -1,0 +1,4 @@
+load("/Volumes/TOSHIBA EXT/Padilha et al/Output - analyses with 8 variables/pno-matrices&plots/PNO.RData")#
+
+ls()#
+

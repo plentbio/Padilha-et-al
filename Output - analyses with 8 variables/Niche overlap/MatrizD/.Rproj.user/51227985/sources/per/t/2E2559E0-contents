@@ -1,0 +1,1054 @@
+
+##1-MODELAGEM
+
+#Banco de dados
+#speciesLink http://www.splink.org.br
+
+
+#Variáveis climáticas - Worldclim
+# http://worldclim.org/version2 na resolução de 2.5 minutes in .tif
+
+library(PresenceAbsence)
+library(raster)
+library(rgdal)
+library(rgeos)
+library(rJava)
+require(rJava)
+library(sp)
+library(dismo)
+library(maptools)
+library(usdm)
+library(adehabitatMA)
+
+# background - Definir diretório com os pontos de background 
+
+#importar dados em csv
+sppbackgroud<-read.csv("sppbackgroud.csv",h=T)
+sppbackgroud
+
+#importar camadas no Worlclim
+worldclim <- getData('worldclim', var='bio', res=2.5) 
+frame<- extent(-82.48333, -33.35,-57.211667,13.43333) #Ámerica Latina
+as <- stack(crop(worldclim, frame))
+
+#Selecionando vari?veis para a modelagem (a seleção foi realizada de acordo com a biologia das espécies)
+
+#BIO8 = Mean Temperature of Wettest Quarter (surr. mean growing season temperature & 9. mean summer temperature)
+
+#BIO16 = Precipitation of Wettest Quarter (surr. growing season precipitation)
+
+#BIO18 = Precipitation of Warmest Quarter (surr. total summer precipitation)
+
+#BIO12 = Annual Precipitation
+
+#BIO5 = Max Temperature of Warmest Month (surr. maximum temperature during the growing season)
+
+#BIO1 = Annual Mean Temperature
+
+#BIO15 = Precipitation Seasonality (Coefficient of Variation)
+
+#BIO6 = Min Temperature of Coldest Month
+
+as <- worldclim[[c("bio8","bio16","bio18","bio12","bio5","bio1","bio15","bio6")]]
+
+#exportar camadas
+writeRaster(as[[1]],"bio8.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[2]],"bio16.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[3]],"bio18.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[4]],"bio12.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[5]],"bio5.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[6]],"bio1.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[7]],"bio15.asc" ,fortmat = "asc", overwrite=T)
+writeRaster(as[[8]],"bio6.asc" ,fortmat = "asc", overwrite=T)
+
+#definir coordenadas
+sppb_coord<-sppbackgroud[,2:3]
+sppb_coord<-as.data.frame(sppb_coord)
+coordinates(sppb_coord) <- ~long+lat # transformando os pontos em coordenadas
+proj4string(sppb_coord) <- CRS( "+proj=longlat +datum=WGS84 +ellps=WGS84 +towgs84=0,0,0 ") #isso ajusta o CRS. ao c?digo do crs escolhido
+
+# Fazendo o buffer para o background - ?rea ao redor de cada ponto de presen?a
+sppb_buf<-buffer(sppb_coord,width=50000) # largura em  metros 
+plot(sppb_buf)
+proj4string(sppb_buf)<-CRS(proj4string(sppb_coord))
+
+#Convertendo o buffer em raster para usar no maxent 
+sppb_buf_ras<-rasterize(sppb_buf,worldclim, fun='sum', background=NA)#rasterizando o buffer para a mesma extensão e resolução do worldclim
+
+plot(sppb_buf_ras)
+writeRaster(sppb_buf_ras,"sppb_bias.asc",fortmat = "asc", overwrite=T)
+
+
+####As modelagens foram realizadas diretamente do MaxEnt
+
+rm(list=ls())
+
+####2 - PERFIL DE OCUPAÇÃO
+library(phyloclim)
+library(sp)
+library(maptools)
+library(raster)
+library(ape)
+library(dismo)
+
+
+## The phyloclim function 'pno' integrates the suitability surface over the climate map to generate a histogram of the relative probability of occupying sites of a given value, along a climate axis. These are equivalent to the plots from Evans et al. 2009 in the lecture. However, I found a missing na.rm in the pno function so it wasn't working on this data set. Load a fix:
+source('myPno.R')
+
+# runs for one variable at a time, specified as a path to the appropriate asc layer
+
+#Clado 1
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio1, legend.pos="topright")
+plotPNO(pno1bio1, legend.pos= NULL)
+pno1bio1
+write.table(round(abs(pno1bio1), 2), "pno1bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio5, legend.pos="topright")
+plotPNO(pno1bio5, legend.pos= NULL)
+pnobio5
+write.table(round(abs(pno1bio5), 2), "pno1bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio6, legend.pos= NULL)
+write.table(round(abs(pno1bio6), 2), "pno1bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio8,legend.pos= NULL)
+write.table(round(abs(pno1bio8), 2), "pno1bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio12, legend.pos= NULL)
+write.table(round(abs(pno1bio12), 2), "pno1bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio15,legend.pos= NULL)
+write.table(round(abs(pno1bio15), 2), "pno1bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio16,legend.pos= NULL)
+write.table(round(abs(pno1bio16), 2), "pno1bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 1/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno1bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno1bio18,legend.pos= NULL)
+write.table(round(abs(pno1bio18), 2), "pno1bio18.xls", row.names = T, sep = "\t")
+
+#Clado 2
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio1, legend.pos="topright")
+plotPNO(pno2bio1, legend.pos= NULL)
+write.table(round(abs(pno2bio1), 2), "pno2bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio5, legend.pos="topleft")
+write.table(round(abs(pno2bio5), 2), "pno2bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio6, legend.pos="topleft")
+write.table(round(abs(pno2bio6), 2), "pno2bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio8, legend.pos="topleft")
+write.table(round(abs(pno2bio8), 2), "pno2bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio12, legend.pos="topright")
+write.table(round(abs(pno2bio12), 2), "pno2bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio15, legend.pos="topright")
+write.table(round(abs(pno2bio15), 2), "pno2bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio16, legend.pos="topright")
+write.table(round(abs(pno2bio16), 2), "pno2bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 2/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno2bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno2bio18, legend.pos="topright")
+write.table(round(abs(pno2bio18), 2), "pno2bio18.xls", row.names = T, sep = "\t")
+
+#Clado 3
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio1, legend.pos="topright")
+write.table(round(abs(pno3bio1), 2), "pno3bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio5, legend.pos="topleft")
+write.table(round(abs(pno3bio5), 2), "pno3bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio6, legend.pos="topleft")
+write.table(round(abs(pno3bio6), 2), "pno3bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio8, legend.pos="topleft")
+write.table(round(abs(pno3bio8), 2), "pno3bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio12, legend.pos="topright")
+plotPNO(pno3bio12, legend.pos= NULL)
+write.table(round(abs(pno3bio12), 2), "pno3bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio15, legend.pos="topright")
+plotPNO(pno3bio15, legend.pos="topleft")
+write.table(round(abs(pno3bio15), 2), "pno3bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio16, legend.pos="topright")
+write.table(round(abs(pno3bio16), 2), "pno3bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 3/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno3bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno3bio18, legend.pos="topright")
+write.table(round(abs(pno3bio18), 2), "pno3bio18.xls", row.names = T, sep = "\t")
+
+#Clado 4
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio1, legend.pos="topright")
+plotPNO(pno4bio1, legend.pos=NULL)
+write.table(round(abs(pno4bio1), 2), "pno4bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio5, legend.pos="topleft")
+write.table(round(abs(pno4bio5), 2), "pno4bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio6, legend.pos="topleft")
+write.table(round(abs(pno4bio6), 2), "pno4bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio8, legend.pos="topleft")
+write.table(round(abs(pno4bio8), 2), "pno4bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio12, legend.pos="topright")
+plotPNO(pno4bio12, legend.pos= NULL)
+write.table(round(abs(pno4bio12), 2), "pno4bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio15, legend.pos="topright")
+plotPNO(pno4bio15, legend.pos="topleft")
+write.table(round(abs(pno4bio15), 2), "pno4bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio16, legend.pos="topright")
+plotPNO(pno4bio16, legend.pos=NULL)
+write.table(round(abs(pno4bio16), 2), "pno4bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 4/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno4bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno4bio18, legend.pos="topright")
+plotPNO(pno4bio18, legend.pos=NULL)
+write.table(round(abs(pno4bio18), 2), "pno4bio18.xls", row.names = T, sep = "\t")
+
+# Clado 5
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio1, legend.pos="topleft")
+plotPNO(pno5bio1, legend.pos=NULL)
+write.table(round(abs(pno5bio1), 2), "pno5bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio5, legend.pos="topleft")
+write.table(round(abs(pno5bio5), 2), "pno5bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio6, legend.pos="topleft")
+write.table(round(abs(pno5bio6), 2), "pno5bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio8, legend.pos="topleft")
+write.table(round(abs(pno5bio8), 2), "pno5bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio12, legend.pos="topright")
+plotPNO(pno5bio12, legend.pos= NULL)
+write.table(round(abs(pno5bio12), 2), "pno5bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio15, legend.pos="topright")
+plotPNO(pno5bio15, legend.pos="topleft")
+plotPNO(pno5bio15, legend.pos=NULL)
+write.table(round(abs(pno5bio15), 2), "pno5bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio16, legend.pos="topright")
+plotPNO(pno5bio16, legend.pos=NULL)
+write.table(round(abs(pno5bio16), 2), "pno5bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 5/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno5bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno5bio18, legend.pos="topright")
+plotPNO(pno5bio18, legend.pos=NULL)
+write.table(round(abs(pno5bio18), 2), "pno5bio18.xls", row.names = T, sep = "\t")
+
+#Clado 6 
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio1, legend.pos="topleft")
+plotPNO(pno6bio1, legend.pos=NULL)
+write.table(round(abs(pno6bio1), 2), "pno6bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio5, legend.pos="topleft")
+write.table(round(abs(pno6bio5), 2), "pno6bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio6, legend.pos="topleft")
+write.table(round(abs(pno6bio6), 2), "pno6bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio8, legend.pos="topleft")
+write.table(round(abs(pno6bio8), 2), "pno6bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio12, legend.pos="topright")
+plotPNO(pno6bio12, legend.pos= NULL)
+write.table(round(abs(pno6bio12), 2), "pno6bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio15, legend.pos="topright")
+plotPNO(pno6bio15, legend.pos="topleft")
+plotPNO(pno6bio15, legend.pos=NULL)
+write.table(round(abs(pno6bio15), 2), "pno6bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio16, legend.pos="topright")
+plotPNO(pno6bio16, legend.pos=NULL)
+write.table(round(abs(pno6bio16), 2), "pno6bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 6/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno6bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno6bio18, legend.pos="topleft")
+plotPNO(pno6bio18, legend.pos=NULL)
+write.table(round(abs(pno6bio18), 2), "pno6bio18.xls", row.names = T, sep = "\t")
+
+# Clado 7
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio1, legend.pos="topleft")
+plotPNO(pno7bio1, legend.pos=NULL)
+write.table(round(abs(pno7bio1), 2), "pno7bio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio5, legend.pos="topleft")
+write.table(round(abs(pno7bio5), 2), "pno7bio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio6, legend.pos="topleft")
+write.table(round(abs(pno7bio6), 2), "pno7bio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio8, legend.pos="topleft")
+write.table(round(abs(pno7bio8), 2), "pno7bio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio12, legend.pos="topright")
+plotPNO(pno7bio12, legend.pos= NULL)
+write.table(round(abs(pno7bio12), 2), "pno7bio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio15, legend.pos="topright")
+plotPNO(pno7bio15, legend.pos="topleft")
+plotPNO(pno7bio15, legend.pos=NULL)
+write.table(round(abs(pno7bio15), 2), "pno7bio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio16, legend.pos="topright")
+plotPNO(pno7bio16, legend.pos=NULL)
+write.table(round(abs(pno7bio16), 2), "pno7bio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/clado 7/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pno7bio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pno7bio18, legend.pos="topleft")
+plotPNO(pno7bio18, legend.pos=NULL)
+write.table(round(abs(pno7bio18), 2), "pno7bio18.xls", row.names = T, sep = "\t")
+
+#PNO de todos os modelos
+
+#bio1
+climvar <- paste(getwd(),'/hotlayers/bio1.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio1 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio1, legend.pos=NULL)
+write.table(round(abs(pnobio1), 2), "pnobio1.xls", row.names = T, sep = "\t")
+
+
+#bio5
+climvar <- paste(getwd(),'/hotlayers/bio5.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio5 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio5, legend.pos=NULL)
+write.table(round(abs(pnobio5), 2), "pnobio5.xls", row.names = T, sep = "\t")
+
+#bio6
+climvar <- paste(getwd(),'/hotlayers/bio6.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio6 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio6, legend.pos=NULL)
+write.table(round(abs(pnobio6), 2), "pnobio6.xls", row.names = T, sep = "\t")
+
+#bio8
+climvar <- paste(getwd(),'/hotlayers/bio8.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio8 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio8, legend.pos=NULL)
+write.table(round(abs(pnobio8), 2), "pnobio8.xls", row.names = T, sep = "\t")
+
+#bio12
+climvar <- paste(getwd(),'/hotlayers/bio12.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio12 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio12, legend.pos= NULL)
+write.table(round(abs(pnobio12), 2), "pnobio12.xls", row.names = T, sep = "\t")
+
+#bio15
+climvar <- paste(getwd(),'/hotlayers/bio15.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio15 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio15, legend.pos=NULL)
+write.table(round(abs(pnobio15), 2), "pnobio15.xls", row.names = T, sep = "\t")
+
+#bio16
+climvar <- paste(getwd(),'/hotlayers/bio16.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio16 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio16, legend.pos=NULL)
+write.table(round(abs(pnobio16), 2), "pnobio16.xls", row.names = T, sep = "\t")
+
+#bio18
+climvar <- paste(getwd(),'/hotlayers/bio18.asc',sep='')
+maxent_models <- paste(getwd(),'/outputs/',sep='')
+nbins <- 25 # number of histogram bins for climate variable
+
+pnobio18 <- myPno(path_bioclim=climvar,path_model=maxent_models,bin_number=nbins)
+plotPNO(pnobio18, legend.pos=NULL)
+write.table(round(abs(pnobio18), 2), "pnobio18.xls", row.names = T, sep = "\t")
+
+
+#######3 - SOBREPOSIÇÃO DE NICHO
+#Por variável climática
+# above the diagonal is the D value
+# below the diagonal is the I value, another statistic for comparing the niche occupancy profiles. See Warren et al. 2008 for more info
+
+AnnualMeanTemperature <-niche.overlap(data.frame(pnobio1))
+write.table(round(abs(niche.overlap(data.frame(pnobio1))), 2), "overlapbio1.xls", row.names = T, sep = "\t")
+
+MaxTemperatureofWarmestMonth<- niche.overlap(data.frame(pnobio5))
+write.table(round(abs(niche.overlap(data.frame(pnobio5))), 2), "overlapbio5.xls", row.names = T, sep = "\t")
+
+MinTemperatureofColdestMonth<-niche.overlap(data.frame(pnobio6))
+write.table(round(abs(niche.overlap(data.frame(pnobio6))), 2), "overlapbio6.xls", row.names = T, sep = "\t")
+
+MeanTemperatureofWettestQuarter<- niche.overlap(data.frame(pnobio8))
+write.table(round(abs(niche.overlap(data.frame(pnobio8))), 2), "overlapbio8.xls", row.names = T, sep = "\t")
+
+AnnualPrecipitation<-niche.overlap(data.frame(pnobio12))
+write.table(round(abs(niche.overlap(data.frame(pnobio12))), 2), "overlapbio12.xls", row.names = T, sep = "\t")
+
+PrecipitationSeasonality<-niche.overlap(data.frame(pnobio15))
+write.table(round(abs(niche.overlap(data.frame(pnobio15))), 2), "overlapbio15.xls", row.names = T, sep = "\t")
+
+PrecipitationofWettenQuarter<- niche.overlap(data.frame(pnobio16))
+write.table(round(abs(niche.overlap(data.frame(pnobio16))), 2), "overlapbio16.xls", row.names = T, sep = "\t")
+
+PrecipitationofWarmestQuarter<-niche.overlap(data.frame(pnobio18))
+write.table(round(abs(niche.overlap(data.frame(pnobio18))), 2), "overlapbio18.xls", row.names = T, sep = "\t")
+
+
+
+##### Equivalencia 
+spp<-read.table("spp.txt",h=T)
+
+
+
+####4 - Niche Overlap - Par a Par
+
+abietina<-raster("outputs/abietina.asc")
+alata<-raster("outputs/alata.asc")
+albiflora<-raster("outputs/albiflora.asc")
+aloifolia<-raster("outputs/aloifolia.asc")
+auriculata<-raster("outputs/auriculata.asc")
+barbata<-raster("outputs/barbata.asc")
+brevifolia<-raster("outputs/brevifolia.asc")
+breviscapa<-raster("outputs/breviscapa.asc")
+burlemarxii<-raster("outputs/burlemarxii.asc")
+caespitosa<-raster("outputs/caespitosa.asc")
+candida<-raster("outputs/candida.asc")
+canelinha<-raster("outputs/canelinha.asc")
+caputardeae<-raster("outputs/caputardeae.asc")
+caruncularis<-raster("outputs/caruncularis.asc")
+caudata<-raster("outputs/caudata.asc")
+ciliata<-raster("outputs/ciliata.asc")
+compacta<-raster("outputs/compacta.asc")
+crinita<-raster("outputs/crinita.asc")
+cryptantha<-raster("outputs/cryptantha.asc")
+dasypus<-raster("outputs/dasypus.asc")
+declinans<-raster("outputs/declinans.asc")
+epidendroides<-raster("outputs/epidendroides.asc")
+froesii<-raster("outputs/froesii.asc")
+furcata<-raster("outputs/furcata.asc")
+geotegens<-raster("outputs/geotegens.asc")
+gigantea<-raster("outputs/gigantea.asc")
+giuliettiae<-raster("outputs/giuliettiae.asc")
+glabra<-raster("outputs/glabra.asc")
+glauca<-raster("outputs/glauca.asc")
+goiasensis<-raster("outputs/goiasensis.asc")
+graminea<-raster("outputs/graminea.asc")
+graomogolensis<-raster("outputs/graomogolensis.asc")
+hatschbachii<-raster("outputs/hatschbachii.asc")
+hemisphaerica<-raster("outputs/hemisphaerica.asc")
+hirsuta<-raster("outputs/hirsuta.asc")
+intermedia<-raster("outputs/intermedia.asc")
+jolyi<-raster("outputs/jolyi.asc")
+marcescens<-raster("outputs/marcescens.asc")
+maxillarioides<-raster("outputs/maxillarioides.asc")
+metzgerae<-raster("outputs/metzgerae.asc")
+minima<-raster("outputs/minima.asc")
+nanuzae<-raster("outputs/nanuzae.asc")
+nivea<-raster("outputs/nivea.asc")
+obtecta<-raster("outputs/obtecta.asc")
+ornata<-raster("outputs/ornata.asc")
+patens<-raster("outputs/patens.asc")
+peripherica<-raster("outputs/peripherica.asc")
+plicata<-raster("outputs/plicata.asc")
+resinosa<-raster("outputs/resinosa.asc")
+seubertiana <-raster("outputs/seubertiana.asc")
+spiralis<-raster("outputs/spiralis.asc")
+stenocarpa<-raster("outputs/stenocarpa.asc")
+stipitata<-raster("outputs/stipitata.asc")
+strangii<-raster("outputs/strangii.asc")
+streptophylla<-raster("outputs/streptophylla.asc")
+subscabra<-raster("outputs/subscabra.asc")
+taxifolia<-raster("outputs/taxifolia.asc")
+tragacantha<-raster("outputs/tragacantha.asc")
+tubiflora<-raster("outputs/tubiflora.asc")
+variabilis<-raster("outputs/variabilis.asc")
+variegata<-raster("outputs/variegata.asc")
+
+list_specimes <- list(abietina,alata,albiflora,aloifolia,auriculata,barbata,brevifolia,breviscapa,burlemarxii,caespitosa,candida,canelinha,caputardeae,caruncularis,caudata,ciliata,compacta,crinita,cryptantha,dasypus,declinans,epidendroides,froesii,furcata,geotegens,gigantea,giuliettiae,glabra,glauca,goiasensis,graminea,graomogolensis,hatschbachii,hemisphaerica ,hirsuta,intermedia,jolyi,marcescens,maxillarioides,metzgerae,minima,nanuzae,nivea,obtecta,ornata,patens,peripherica,plicata,resinosa,seubertiana,spiralis,stenocarpa,stipitata,strangii,subscabra,taxifolia,tragacantha,tubiflora,variabilis,variegata)
+
+#index D
+i<-1
+j <- 0
+analise <- 0
+for (specie in list_specimes){
+  for (specie2 in list_specimes){
+    
+      analise[i]<-nicheOverlap(specie,specie2, stat='D', mask=F, checkNegatives=F)
+      i<-i+1  
+    }
+}
+
+matriz <- matrix(analise,nrow = 60,ncol = 60)
+matriz
+write.table(round(abs(niche.overlap(data.frame(matriz))), 8), "D2.xls", row.names = T, sep = "\t")
+
+#index I
+i<-1
+j <- 0
+analise <- 0
+for (specie in list_specimes){
+  for (specie2 in list_specimes){
+    
+    analise[i]<-nicheOverlap(specie,specie2, stat='I', mask=F, checkNegatives=F)
+    i<-i+1  
+  }
+}
+
+matriz2 <- matrix(analise,nrow = 61,ncol = 61)
+write.table(round(abs(niche.overlap(data.frame(matriz2))), 8), "I.xls", row.names = T, sep = "\t")
+
+########ou para pares de espécies
+
+D<-nicheOverlap(albiflora, caruncularis, stat='D', mask=F, checkNegatives=F)
+D
+
+I<-nicheOverlap(albiflora, caruncularis, stat='I', mask=F, checkNegatives=F)
+I
+
+## 5 - Similaridade e equivalencia
+#pares de espécies por clados
+## Script 2. 
+
+
+
+####### 6 - ESTIMATION OF ANCESTRAL CLIMATIC
+library(ape)
+library(phytools)
+
+###import trees:
+besttreePP <- read.nexus("bestVelloziaPP2020", force.multi = FALSE)
+plot(besttreePP)
+
+
+#conjunto de arvores 
+multitrees <- read.nexus("Vellozia1000PP2020", force.multi = TRUE)
+plotTree(multitrees[[300]])
+
+#read tree
+tree<-read.tree('VellPattreefile.txt')
+tree
+plot(tree)
+
+
+
+#utilizar PNOs da ánalise 2 
+#plot por variável climática. 
+
+pnobio1P<- as.data.frame(pnobio1)
+pnobio5P<- as.data.frame(pnobio5)
+pnobio6P<- as.data.frame(pnobio6)
+pnobio8P<- as.data.frame(pnobio8)
+pnobio12P<- as.data.frame(pnobio12)
+pnobio15P<- as.data.frame(pnobio15)
+pnobio16P<- as.data.frame(pnobio16)
+pnobio18P<- as.data.frame(pnobio18)
+
+#Transformar matrix em data frame
+class(pnobio1)
+pnobio1P <- as.data.frame(pnobio1)
+class(pnobio1P)
+
+class(pnobio5)
+pnobio5P <- as.data.frame(pnobio5)
+class(pnobio5P)
+
+class(pnobio6)
+pnobio6P <- as.data.frame(pnobio6)
+class(pnobio6P)
+
+class(pnobio8)
+pnobio8P <- as.data.frame(pnobio8)
+class(pnobio8P)
+
+class(pnobio12)
+pnobio12P <- as.data.frame(pnobio12)
+class(pnobio12P)
+
+class(pnobio15)
+pnobio15P <- as.data.frame(pnobio15)
+class(pnobio15P)
+
+class(pnobio16)
+pnobio16P <- as.data.frame(pnobio16)
+class(pnobio16P)
+
+class(pnobio18)
+pnobio18P <- as.data.frame(pnobio18)
+class(pnobio18P)
+
+
+acbio1 <- anc.clim(target = besttreePP, pno = pnobio1P, n = 10000)
+plotAncClim(acbio1, ylab = "Annual Mean Temperature")
+
+acbio5 <- anc.clim(target = besttreePP, pno = pnobio5P, n = 10000)
+plotAncClim(acbio5, ylab = "Max Temperature of Warmest Month")
+
+acbio6 <- anc.clim(target = besttreePP, pno = pnobio6P, n = 10000)
+plotAncClim(acbio6, ylab = "Min Temperature of Coldest Month")
+
+acbio8 <- anc.clim(target = besttreePP, pno = pnobio8P, n = 10000)
+plotAncClim(acbio8, ylab = "Mean Temperature of Wettest Quarter")
+
+acbio12 <- anc.clim(target = besttreePP, pno = pnobio12P, n = 10000)
+plotAncClim(acbio12, ylab = "Annual Precipitation") 
+
+acbio15 <- anc.clim(target = besttreePP, pno = pnobio15P, n = 10000)
+plotAncClim(acbio15, ylab = "Precipitation Seasonality")
+
+acbio16 <- anc.clim(target = besttreePP, pno = pnobio16P, n = 10000)
+plotAncClim(acbio16, ylab = "Precipitation of Wettest Quarter")
+
+acbio18 <- anc.clim(target = besttreePP, pno = pnobio18P, n = 10000)
+plotAncClim(acbio18, ylab = "Precipitation of Warmest Quarter")
+
+
+
+### multitree
+treesP <- read.tree("trees801", keep.multi=TRUE) #salvar arquivo anexo no mesmo diretório do R
+class(treesP) #tem que ser multiPhylo
+
+acbio2multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio2P,n=10000)
+plotAncClim(acbio2multi, ylab = "Mean Diurnal Range")
+
+acbio3multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio3P,n=10000)
+
+acbio8multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio8P,n=10000)
+
+acbio9multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio9P,n=10000)
+
+acbio13multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio13P,n=10000)
+
+acbio14multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio14P,n=10000)
+
+acbio15multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio15P,n=10000)
+
+acbio18multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio18P,n=10000)
+
+acbio19multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio19P,n=10000)
+
+
+
+
+acbio2multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio2P,n=10000)
+plotAncClim(acbio2multi, ylab = "Mean Diurnal Range")
+
+acbio3multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio3P,n=10000)
+plotAncClim(acbio3multi, ylab = "Isothermality")
+
+acbio8multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio8P,n=10000)
+plotAncClim(acbio8multi, ylab = "Mean Temperature of Wettest Quarter")
+
+acbio9multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio9P,n=10000)
+plotAncClim(acbio9multi, ylab = "Mean Temperature of Driest Quarter")
+
+acbio13multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio13P,n=10000)
+plotAncClim(acbio13multi, ylab = "Precipitation of Wettest Month") 
+
+acbio14multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio14P,n=10000)
+plotAncClim(acbio14multi, ylab = "Precipitation of Driest Month")
+
+acbio15multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio15P,n=10000)
+plotAncClim(acbio15multi, ylab = "Precipitation Seasonality")
+
+acbio18multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio18P,n=10000)
+plotAncClim(acbio18multi, ylab = "Precipitation of Warmest Quarter")
+
+acbio19multi<- anc.clim(besttreePP, posterior=treesP, pno = pnobio19P,n=10000)
+plotAncClim(acbio19multi, ylab = "Precipitation of Coldest Quarter")
+
+# 7 - Disparidade
+
+library(geiger)
+
+dttcul2<-dtt(acbio2multi$tree, data=acbio2multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul2
+
+dttcul3<-dtt(acbio3multi$tree, data=acbio3multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul3
+
+dttcul8<-dtt(acbio8multi$tree, data=acbio8multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul8
+
+dttcul9<-dtt(acbio9multi$tree, data=acbio9multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul9
+
+dttcul3<-dtt(acbio3multi$tree, data=acbio3multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul3
+
+dttcul14<-dtt(acbio14multi$tree, data=acbio14multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul14
+
+dttcul<-dtt(acbio15multi$tree, data=acbio15multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul
+
+dttcul18<-dtt(acbio18multi$tree, data=acbio18multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul18
+
+dttcul9<-dtt(acbio9multi$tree, data=acbio9multi$means, nsim=100, plot=TRUE, calculateMDIp=T)
+dttcul9
+
+
+
