@@ -1,0 +1,73 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1561\cocoasubrtf600
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10280\viewh17380\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 \
+library(phyloclim)\
+library(ape)\
+library(phytools)\
+\
+besttreePP <- read.newick("tree")\
+\
+class(pnobio13)\
+Matrix\
+\
+pnobio13P <- as.data.frame(pnobio13)\
+class(pnobio13P)\
+Data.frame\
+\
+\
+acbio2 <- anc.clim(target = besttreePP, pno = pnobio2P, n = 10000)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plotAncClim(acbio2, ylab = "Mean Diurnal Range")\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 acbio3 <- anc.clim(target = besttreePP, pno = pnobio3P, n = 10000)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plotAncClim(acbio3, ylab = "Isothermality")\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 acbio8 <- anc.clim(target = besttreePP, pno = pnobio8P, n = 10000)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plotAncClim(acbio8, ylab = "Mean Temperature of Wettest Quarter")\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 acbio9 <- anc.clim(target = besttreePP, pno = pnobio9P, n = 10000)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plotAncClim(acbio9, ylab = "Mean Temperature of Driest Quarter")\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 acbio13 <- anc.clim(target = besttreePP, pno = pnobio13P, n = 10000)\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 plotAncClim(acbio13, ylab =\'93Precipitation of Wettest Month\'94)\
+\
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+\cf0 acbio14 <- anc.clim(target = besttreePP, pno = pnobio14P, n = 10000)\
+plotAncClim(acbio14, ylab = \'93Precipitation of Driest Month\'94)\
+\
+acbio15 <- anc.clim(target = besttreePP, pno = pnobio15P, n = 10000)\
+plotAncClim(acbio15, ylab = \'93Precipitation Seasonality\'94)\
+\
+acbio18 <- anc.clim(target = besttreePP, pno = pnobio18P, n = 10000)\
+plotAncClim(acbio18, ylab = \'93Precipitation of Warmest Quarter\'94)\
+\
+acbio19 <- anc.clim(target = besttreePP, pno = pnobio19P, n = 10000)\
+plotAncClim(acbio19, ylab = \'93Precipitation of Coldest Quarter\'94)\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+\
+}

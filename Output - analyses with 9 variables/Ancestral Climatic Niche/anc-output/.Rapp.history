@@ -1,0 +1,9 @@
+load("/Users/plentbio/Documents/Patricia/anc-teste/Untitled.RData")
+plotPNO(pnobio9, legend.pos= NULL)
+library(phyloclim)#
+library(sp)#
+library(maptools)#
+library(raster)#
+library(ape)#
+library(dismo)
+setwd("~/Documents/patricia/anc-teste")

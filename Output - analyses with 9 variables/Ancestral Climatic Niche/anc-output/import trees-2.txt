@@ -1,0 +1,9 @@
+library(ape)
+library(phytools)
+
+###import trees:
+besttreePP <- read.nexus("bestVellozia-epithP", force.multi = FALSE)
+plot(besttreePP)
+
+multitrees <- read.nexus("Vellozia801trees-epithP", force.multi = TRUE)
+plotTree(multitrees[[300]])

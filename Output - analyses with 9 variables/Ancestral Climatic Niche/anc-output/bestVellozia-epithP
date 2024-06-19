@@ -1,0 +1,137 @@
+#NEXUS
+[R-package APE, Fri Jan  4 14:07:41 2019]
+
+BEGIN TAXA;
+	DIMENSIONS NTAX = 62;
+	TAXLABELS
+		abietina
+		alata
+		albiflora
+		aloifolia
+		auriculata
+		barbata
+		brevifolia
+		breviscapa
+		burlemarxii
+		caespitosa
+		candida
+		canelinha
+		caputardeae
+		caruncularis
+		caudata
+		ciliata
+		compacta
+		crinita
+		cryptantha
+		dasypus
+		declinans
+		epidendroides
+		froesii
+		furcata
+		geotegens
+		gigantea
+		giulietiiae
+		glabra
+		glauca
+		goiasensis
+		graminea
+		graomogolensis
+		hatschbachii
+		hemisphaerica
+		hirsuta
+		intermedia
+		jolyi
+		marcescens
+		maxillarioides
+		metzgerae
+		minima
+		nanuzae
+		nivea
+		obtecta
+		ornata
+		patens
+		peripherica
+		plicata
+		punctulata
+		resinosa
+		seubertiana
+		spiralis
+		stenocarpa
+		stiptata
+		strangii
+		streptophylla
+		subscabra
+		taxifolia
+		tragacantha
+		tubiflora
+		variabilis
+		variegata
+	;
+END;
+BEGIN TREES;
+	TRANSLATE
+		1	abietina,
+		2	alata,
+		3	albiflora,
+		4	aloifolia,
+		5	auriculata,
+		6	barbata,
+		7	brevifolia,
+		8	breviscapa,
+		9	burlemarxii,
+		10	caespitosa,
+		11	candida,
+		12	canelinha,
+		13	caputardeae,
+		14	caruncularis,
+		15	caudata,
+		16	ciliata,
+		17	compacta,
+		18	crinita,
+		19	cryptantha,
+		20	dasypus,
+		21	declinans,
+		22	epidendroides,
+		23	froesii,
+		24	furcata,
+		25	geotegens,
+		26	gigantea,
+		27	giulietiiae,
+		28	glabra,
+		29	glauca,
+		30	goiasensis,
+		31	graminea,
+		32	graomogolensis,
+		33	hatschbachii,
+		34	hemisphaerica,
+		35	hirsuta,
+		36	intermedia,
+		37	jolyi,
+		38	marcescens,
+		39	maxillarioides,
+		40	metzgerae,
+		41	minima,
+		42	nanuzae,
+		43	nivea,
+		44	obtecta,
+		45	ornata,
+		46	patens,
+		47	peripherica,
+		48	plicata,
+		49	punctulata,
+		50	resinosa,
+		51	seubertiana,
+		52	spiralis,
+		53	stenocarpa,
+		54	stiptata,
+		55	strangii,
+		56	streptophylla,
+		57	subscabra,
+		58	taxifolia,
+		59	tragacantha,
+		60	tubiflora,
+		61	variabilis,
+		62	variegata
+	;
+	TREE * UNTITLED = [&R] (((((((((((((1:3.770096309,32:3.770096309):0.7647331228,56:4.534829432):1.021967793,52:5.556797225):1.928282451,7:7.485079676):0.7539391543,59:8.23901883):2.571012245,((((((((5:2.0805259,28:2.0805259):1.015053114,45:3.095579014):0.7745055128,(21:1.720397446,58:1.720397446):2.149687081):0.1980293502,19:4.068113877):0.6513104579,(22:2.484191545,62:2.484191545):2.235232791):1.862298539,26:6.581722874):1.709629741,(((((((55:3.212082159,38:3.212082159):0.1076115556,36:3.319693715):0.717531194,54:4.037224909):0.8095039427,46:4.846728852):1.046204298,(((8:1.313654659,14:1.313654659):0.7188524831,57:2.032507142):2.646022357,(33:4.032602668,61:4.032602668):0.64592683):1.214403651):0.6969356931,(44:3.881814336,47:3.881814336):2.708054506):0.9746764977,(13:5.299148096,50:5.299148096):2.265397244):0.7268072743):1.116897725,(6:8.233605618,((27:3.874721212,41:3.874721212):3.012291636,53:6.887012849):1.34659277):1.174644721):1.401780736):1.287186727,16:12.0972178):1.978213691,(2:11.52234734,((17:4.794361475,31:4.794361475):5.156001963,49:9.950363438):1.571983903):2.553084152):3.914223759,((4:3.10286633,10:3.10286633):4.438796077,(18:4.792776301,40:4.792776301):2.748886106):10.44799284):3.22204847,(((9:8.052370416,(15:4.250222228,34:4.250222228):3.802148188):3.556206576,37:11.60857699):4.872171004,12:16.480748):4.730955726):1.852919971,(((((25:1.630712037,3:1.630712037):0.545183985,42:2.175896022):3.036698553,(29:3.634976851,35:3.634976851):1.577617724):1.325087865,11:6.53768244):8.203089582,(20:8.556238779,((23:4.288066083,51:4.288066083):2.251134045,24:6.539200127):2.017038652):6.184533243):8.323851672):3.033100172,((30:15.01173793,(39:12.57140894,43:12.57140894):2.440328993):4.182183379,60:19.19392131):6.903802556):8.227601315,48:34.32532518);
+END;
