@@ -1,0 +1,13 @@
+Table. VIF (variance inflation factors) among the 9 variables remained selected after excluding the highly correlated variables from the 19 climatic variables from WordClim 2.
+
+Variable	VIF
+Precipitation of Wettest Quarter	5.444275
+Precipitation of Driest Month	4.316977
+Precipitation Seasonality	2.490485
+Precipitation of Warmest Quarter	3.328877
+Precipitation of Coldest Quarter	3.875009
+Mean Diurnal Range	2.089428
+Isotermality	2.564474
+Mean Temperature of Wettest Quarter	2.898951
+Mean Temperature of Driest Quarter	5.315349
+
